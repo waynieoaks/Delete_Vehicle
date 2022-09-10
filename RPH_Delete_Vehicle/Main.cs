@@ -2,10 +2,13 @@
 using Rage.Native;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace RPH_Delete_Vehicle
 {
@@ -17,13 +20,15 @@ namespace RPH_Delete_Vehicle
         public static Keys DeleteModifierKey { get; set; }
         // public static ControllerButtons DeleteButton { get; set; }
         // public static ControllerButtons DeleteModifierButton { get; set; }
+        public static Boolean ProtectCurrentVehicle { get; set; }
+        public static Boolean ProtectLastVehicle { get; set; }
         public static Boolean ProtectEmergencyVehicles { get; set; }
         public static Boolean ShowDebug { get; set; }
 
         //Initialization of the plugin.
         public static void Main()
         {
-            Game.LogTrivial("Loading " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + " settings...");
+            Game.LogTrivial("Loading settings...");
             LoadValuesFromIniFile();
 
             Game.LogTrivial(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + " has been initialised.");
@@ -50,6 +55,7 @@ namespace RPH_Delete_Vehicle
                     {
                         // Call the thing to do here!
 
+                        DoDeleteVehicle();
                         GameFiber.Sleep(1000);
                     }
                 }
@@ -60,8 +66,53 @@ namespace RPH_Delete_Vehicle
         {
             try
             {
-                // Do your stuff here!
-                Game.DisplayNotification("Delete vehicle key pressed!");
+                // Get some local variables
+                Ped playerPed = Game.LocalPlayer.Character;
+ 
+                // Get the closest vehicle
+                Vehicle GetVehicle = (Vehicle)World.GetClosestEntity(playerPed.Position, 5.0f, GetEntitiesFlags.ConsiderAllVehicles); // Search 5m around player for vehicle
+
+                if (GetVehicle != null)
+                {
+                    // Vehicle GetVehicle = (Vehicle)GetEntity;
+                    Command_Debug("Found a " + GetVehicle.Model.Name + ", Registration: " + GetVehicle.LicensePlate);
+
+                    if ((ProtectCurrentVehicle == true) && (playerPed.IsInAnyVehicle(true)))
+                    {
+                        Game.DisplayNotification("You cannot delete the vehicle you are sitting in!");
+
+                        return;
+
+                    }
+                    else if ((ProtectCurrentVehicle == true) && (GetVehicle == playerPed.LastVehicle))
+                    {
+                        //If vehcile is players last vehicle, prompt are you sure? 
+                        Game.DisplayNotification("You cannot delete the last vehicle you were sitting in!");
+
+                        return;
+
+                    }
+                    else if ((ProtectEmergencyVehicles == true) && (GetVehicle.Class == VehicleClass.Emergency)) 
+                    {
+                        // If ProtectEmergencyVehicles is true check if emergency vehicle and prompt are you sure?
+                         Game.DisplayNotification("You cannot delete emergency vehicles!");
+
+                        return;
+                    }
+
+                    // Else delete it
+                    GetVehicle.Delete();
+
+                } else
+                {
+                    // There was no vehicle nearby...
+                    Game.DisplayNotification("Could not find vehicle to delete! Try getting a little closer.");
+                }
+
+
+
+
+
             }
             catch (Exception e)
             {
@@ -78,18 +129,18 @@ namespace RPH_Delete_Vehicle
             {
                 //Keyboard ini
 
-                if (ini.DoesKeyExist("Keyboard", "DeleteKey")) { DeleteKey = ini.ReadEnum<Keys>("Keyboard", "DeleteKey", Keys.R); }
+                if (ini.DoesKeyExist("Keyboard", "DeleteKey")) { DeleteKey = ini.ReadEnum<Keys>("Keyboard", "DeleteKey", Keys.L); }
                 else
                 {
-                    ini.Write("Keyboard", "DeleteKey", "R");
-                    DeleteKey = Keys.R;
+                    ini.Write("Keyboard", "DeleteKey", "L");
+                    DeleteKey = Keys.L;
                 }
 
-                if (ini.DoesKeyExist("Keyboard", "DeleteModifierKey")) { DeleteModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeleteModifierKey", Keys.ControlKey); }
+                if (ini.DoesKeyExist("Keyboard", "DeleteModifierKey")) { DeleteModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeleteModifierKey", Keys.ShiftKey); }
                 else
                 {
-                    ini.Write("Keyboard", "DeleteModifierKey", "ControlKey");
-                    DeleteModifierKey = Keys.ControlKey;
+                    ini.Write("Keyboard", "DeleteModifierKey", "ShiftKey");
+                    DeleteModifierKey = Keys.ShiftKey;
                 }
 
                 // Controller ini
@@ -110,6 +161,20 @@ namespace RPH_Delete_Vehicle
 
                 // Other ini
 
+                if (ini.DoesKeyExist("Other", "ProtectCurrentVehicle")) { ProtectCurrentVehicle = ini.ReadBoolean("Other", "ProtectCurrentVehicle", true); }
+                else
+                {
+                    ini.Write("Other", "ProtectCurrentVehicle", "true");
+                    ProtectCurrentVehicle = true;
+                }
+                
+                if (ini.DoesKeyExist("Other", "ProtectlastVehicle")) { ProtectLastVehicle = ini.ReadBoolean("Other", "ProtectlastVehicle", true); }
+                else
+                {
+                    ini.Write("Other", "ProtectlastVehicle", "true");
+                    ProtectLastVehicle = true;
+                }
+                
                 if (ini.DoesKeyExist("Other", "ProtectEmergencyVehicles")) { ProtectEmergencyVehicles = ini.ReadBoolean("Other", "ProtectEmergencyVehicles", true); }
                 else
                 {
@@ -136,7 +201,8 @@ namespace RPH_Delete_Vehicle
         {
             if (ShowDebug == true)
             {
-                Game.DisplayNotification(text);
+                Game.DisplayNotification("~r~~h~Debug:~h~~s~ " + text);
+                Game.LogTrivial("Debug: " + text);
             }
         }
 
@@ -146,7 +212,7 @@ namespace RPH_Delete_Vehicle
             Game.LogTrivial("Error during " + ErrMod);
             Game.LogTrivial("Decription: " + ErrDesc);
             Game.LogTrivial(Err.ToString());
-            Game.DisplayNotification("~r~~h~" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + ":~h~~s~ Error during " + ErrMod + ". Please send logs.");
+            Game.DisplayNotification("~r~~h~Delete Vehicle:~h~~s~ Error during " + ErrMod + ". Please send logs.");
         }
     }
 }
