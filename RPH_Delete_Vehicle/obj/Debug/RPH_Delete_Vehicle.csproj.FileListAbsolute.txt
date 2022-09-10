@@ -1,0 +1,17 @@
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RPH_Delete_Vehicle.dll
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RPH_Delete_Vehicle.pdb
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RagePluginHookSDK.dll
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RagePluginHookSDK.xml
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.AssemblyReference.cache
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.CoreCompileInputs.cache
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.CopyComplete
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.dll
+C:\Temp\RPH_Delete_Vehicle\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.pdb
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RPH_Delete_Vehicle.dll
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RPH_Delete_Vehicle.pdb
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\bin\Debug\RagePluginHookSDK.xml
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.AssemblyReference.cache
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.CoreCompileInputs.cache
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.csproj.CopyComplete
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.dll
+D:\GitHubRepos\RPH_Delete_Vehicle\RPH_Delete_Vehicle\obj\Debug\RPH_Delete_Vehicle.pdb

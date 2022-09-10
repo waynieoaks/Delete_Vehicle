@@ -13,10 +13,11 @@ namespace RPH_Delete_Vehicle
 
     {
         public static string INIpath = "Plugins\\RPH_Delete_Vehicle.ini";
-        public static Keys ExampleKey { get; set; }
-        public static Keys ExampleModifierKey { get; set; }
-        public static ControllerButtons ExampleButton { get; set; }
-        public static ControllerButtons ExampleModifierButton { get; set; }
+        public static Keys DeleteKey { get; set; }
+        public static Keys DeleteModifierKey { get; set; }
+        // public static ControllerButtons DeleteButton { get; set; }
+        // public static ControllerButtons DeleteModifierButton { get; set; }
+        public static Boolean ProtectEmergencyVehicles { get; set; }
         public static Boolean ShowDebug { get; set; }
 
         //Initialization of the plugin.
@@ -36,15 +37,15 @@ namespace RPH_Delete_Vehicle
 
                     //Check for key press
                     if (
-                            (Game.IsKeyDown(ExampleKey)
-                                && (Game.IsKeyDownRightNow(ExampleModifierKey)
-                                || ExampleModifierKey == Keys.None)
+                            (Game.IsKeyDown(DeleteKey)
+                                && (Game.IsKeyDownRightNow(DeleteModifierKey)
+                                || DeleteModifierKey == Keys.None)
                             )
-                            ||
-                            (Game.IsControllerButtonDown(ExampleButton)
-                                && (Game.IsControllerButtonDownRightNow(ExampleModifierButton)
-                                || ExampleModifierButton == ControllerButtons.None)
-                            )
+                         //   ||
+                         //   (Game.IsControllerButtonDown(ExampleButton)
+                         //       && (Game.IsControllerButtonDownRightNow(ExampleModifierButton)
+                         //       || ExampleModifierButton == ControllerButtons.None)
+                         //   )
                         )
                     {
                         // Call the thing to do here!
@@ -55,11 +56,12 @@ namespace RPH_Delete_Vehicle
             });
         }
 
-        private static void DoCodeHere()
+        private static void DoDeleteVehicle()
         {
             try
             {
                 // Do your stuff here!
+                Game.DisplayNotification("Delete vehicle key pressed!");
             }
             catch (Exception e)
             {
@@ -76,37 +78,44 @@ namespace RPH_Delete_Vehicle
             {
                 //Keyboard ini
 
-                if (ini.DoesKeyExist("Keyboard", "ExampleKey")) { ExampleKey = ini.ReadEnum<Keys>("Keyboard", "ExampleKey", Keys.R); }
+                if (ini.DoesKeyExist("Keyboard", "DeleteKey")) { DeleteKey = ini.ReadEnum<Keys>("Keyboard", "DeleteKey", Keys.R); }
                 else
                 {
-                    ini.Write("Keyboard", "ExampleKey", "R");
-                    ExampleKey = Keys.R;
+                    ini.Write("Keyboard", "DeleteKey", "R");
+                    DeleteKey = Keys.R;
                 }
 
-                if (ini.DoesKeyExist("Keyboard", "ExampleModifierKey")) { ExampleModifierKey = ini.ReadEnum<Keys>("Keyboard", "ExampleModifierKey", Keys.ControlKey); }
+                if (ini.DoesKeyExist("Keyboard", "DeleteModifierKey")) { DeleteModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeleteModifierKey", Keys.ControlKey); }
                 else
                 {
-                    ini.Write("Keyboard", "ExampleModifierKey", "ControlKey");
-                    ExampleModifierKey = Keys.ControlKey;
+                    ini.Write("Keyboard", "DeleteModifierKey", "ControlKey");
+                    DeleteModifierKey = Keys.ControlKey;
                 }
 
                 // Controller ini
 
-                if (ini.DoesKeyExist("Controller", "ExampleButton")) { ExampleButton = ini.ReadEnum<ControllerButtons>("Controller", "ExampleButton", ControllerButtons.None); }
-                else
-                {
-                    ini.Write("Controller", "ExampleButton", "None");
-                    ExampleButton = ControllerButtons.None;
-                }
-
-                if (ini.DoesKeyExist("Controller", "ExampleModifierButton")) { ExampleModifierButton = ini.ReadEnum<ControllerButtons>("Controller", "ExampleModifierButton", ControllerButtons.None); }
-                else
-                {
-                    ini.Write("Controller", "ExampleModifierButton", "None");
-                    ExampleModifierButton = ControllerButtons.None;
-                }
+                // if (ini.DoesKeyExist("Controller", "ExampleButton")) { ExampleButton = ini.ReadEnum<ControllerButtons>("Controller", "ExampleButton", ControllerButtons.None); }
+                // else
+                // {
+                //     ini.Write("Controller", "ExampleButton", "None");
+                //     ExampleButton = ControllerButtons.None;
+                // }
+                //
+                // if (ini.DoesKeyExist("Controller", "ExampleModifierButton")) { ExampleModifierButton = ini.ReadEnum<ControllerButtons>("Controller", "ExampleModifierButton", ControllerButtons.None); }
+                // else
+                // {
+                //     ini.Write("Controller", "ExampleModifierButton", "None");
+                //     ExampleModifierButton = ControllerButtons.None;
+                // }
 
                 // Other ini
+
+                if (ini.DoesKeyExist("Other", "ProtectEmergencyVehicles")) { ProtectEmergencyVehicles = ini.ReadBoolean("Other", "ProtectEmergencyVehicles", true); }
+                else
+                {
+                    ini.Write("Other", "ProtectEmergencyVehicles", "true");
+                    ProtectEmergencyVehicles = true;
+                }
 
                 if (ini.DoesKeyExist("Other", "ShowDebug")) { ShowDebug = ini.ReadBoolean("Other", "ShowDebug", false); }
                 else
