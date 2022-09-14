@@ -70,7 +70,7 @@ namespace RPH_Delete_Vehicle
                 Ped playerPed = Game.LocalPlayer.Character;
  
                 // Get the closest vehicle
-                Vehicle GetVehicle = (Vehicle)World.GetClosestEntity(playerPed.Position, 5.0f, GetEntitiesFlags.ConsiderAllVehicles); // Search 5m around player for vehicle
+                Vehicle GetVehicle = (Vehicle)World.GetClosestEntity(playerPed.Position, 6.0f, GetEntitiesFlags.ConsiderAllVehicles); // Search 6m around player for vehicle
 
                 if (GetVehicle != null)
                 {
@@ -100,7 +100,16 @@ namespace RPH_Delete_Vehicle
                         return;
                     }
 
-                    // Else delete it
+                    // Else we can delete the vehicle
+
+                    // Check if there is a driver and delete them ( https://github.com/waynieoaks/RPH_Delete_Vehicle/issues/1 ) //
+                    Ped GetDriver = GetVehicle.Driver;
+                    if (GetDriver != null)
+                    {
+                        GetDriver.Delete();
+                    }
+
+                    // Now delete vehicle
                     GetVehicle.Delete();
 
                 } else
