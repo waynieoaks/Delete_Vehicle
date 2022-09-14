@@ -13,6 +13,9 @@ Installation:
 1. Copy the plugins folder into your "Grand Theft Auto V" install folder 
 2. Edit the keybindings in the .ini to meet your requirements
 
+Known issues:
+- Driver is not deleted with vehicle if stop or slow traffic is activated in Stop The Ped
+
 Planned features:
 - Prompt "are you sure" for protected vehicles allowing deletion override 
 
