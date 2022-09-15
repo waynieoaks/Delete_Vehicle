@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Net.Mime.MediaTypeNames;
@@ -18,12 +20,20 @@ namespace RPH_Delete_Vehicle
         public static string INIpath = "Plugins\\RPH_Delete_Vehicle.ini";
         public static Keys DeleteKey { get; set; }
         public static Keys DeleteModifierKey { get; set; }
+        public static Keys ConfirmKey { get; set; }
+        public static Keys ConfirmModifierKey { get; set; }
+        public static Keys DeclineKey { get; set; }
+        public static Keys DeclineModifierKey { get; set; }
+
         // public static ControllerButtons DeleteButton { get; set; }
         // public static ControllerButtons DeleteModifierButton { get; set; }
         public static Boolean ProtectCurrentVehicle { get; set; }
         public static Boolean ProtectLastVehicle { get; set; }
         public static Boolean ProtectEmergencyVehicles { get; set; }
         public static Boolean ShowDebug { get; set; }
+        public static Vehicle GetVehicle { get; set; }
+        public static Boolean AwaitingInput { get; set; }
+        public static UInt32 MsgID { get; set; }
 
         //Initialization of the plugin.
         public static void Main()
@@ -33,7 +43,7 @@ namespace RPH_Delete_Vehicle
 
             Game.LogTrivial(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + " has been initialised.");
 
-            // Cinematic control fiber
+            // Keybind control fiber
             GameFiber.StartNew(delegate
             {
                 while (true)
@@ -46,23 +56,52 @@ namespace RPH_Delete_Vehicle
                                 && (Game.IsKeyDownRightNow(DeleteModifierKey)
                                 || DeleteModifierKey == Keys.None)
                             )
-                         //   ||
-                         //   (Game.IsControllerButtonDown(ExampleButton)
-                         //       && (Game.IsControllerButtonDownRightNow(ExampleModifierButton)
-                         //       || ExampleModifierButton == ControllerButtons.None)
-                         //   )
+                        //   ||
+                        //   (Game.IsControllerButtonDown(ExampleButton)
+                        //       && (Game.IsControllerButtonDownRightNow(ExampleModifierButton)
+                        //       || ExampleModifierButton == ControllerButtons.None)
+                        //   )
                         )
                     {
                         // Call the thing to do here!
 
-                        DoDeleteVehicle();
+                        ChkDeleteVehicle();
                         GameFiber.Sleep(1000);
+                    }
+                    if (Game.IsKeyDown(ConfirmKey) &&
+                            (
+                                (Game.IsKeyDownRightNow(ConfirmModifierKey) || ConfirmModifierKey == Keys.None)
+                            )
+                                && (AwaitingInput == true)
+                        )
+                    {
+                        // Delete confirmed
+                        Game.RemoveNotification(MsgID);
+                        DeleteVehicle();
+                        AwaitingInput = false; // Cancel the timer
+                        
+                        GameFiber.Sleep(500);
+                    }
+                    if (Game.IsKeyDown(DeclineKey) &&
+                            (
+                                (Game.IsKeyDownRightNow(DeclineModifierKey) || DeclineModifierKey == Keys.None)
+                            )
+                                && (AwaitingInput == true)
+                        )
+                    {
+                        // Confirm cancellation
+                        Game.RemoveNotification(MsgID);
+
+                        Command_Debug("Delete Cancelled");
+
+                        AwaitingInput = false; // Cancel the timer
+                        GameFiber.Sleep(500);
                     }
                 }
             });
         }
 
-        private static void DoDeleteVehicle()
+        private static void ChkDeleteVehicle()
         {
             try
             {
@@ -70,7 +109,8 @@ namespace RPH_Delete_Vehicle
                 Ped playerPed = Game.LocalPlayer.Character;
  
                 // Get the closest vehicle
-                Vehicle GetVehicle = (Vehicle)World.GetClosestEntity(playerPed.Position, 6.0f, GetEntitiesFlags.ConsiderAllVehicles); // Search 6m around player for vehicle
+                GetVehicle = (Vehicle)World.GetClosestEntity(playerPed.Position, 6.0f, GetEntitiesFlags.ConsiderAllVehicles); 
+                // Search 6m around player for vehicle
 
                 if (GetVehicle != null)
                 {
@@ -79,7 +119,8 @@ namespace RPH_Delete_Vehicle
 
                     if ((ProtectCurrentVehicle == true) && (playerPed.IsInAnyVehicle(true)))
                     {
-                        Game.DisplayNotification("You cannot delete the vehicle you are sitting in!");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you are sitting in?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
 
@@ -87,30 +128,23 @@ namespace RPH_Delete_Vehicle
                     else if ((ProtectCurrentVehicle == true) && (GetVehicle == playerPed.LastVehicle))
                     {
                         //If vehcile is players last vehicle, prompt are you sure? 
-                        Game.DisplayNotification("You cannot delete the last vehicle you were sitting in!");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you were last sitting in?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
 
                     }
-                    else if ((ProtectEmergencyVehicles == true) && (GetVehicle.Class == VehicleClass.Emergency)) 
+                    else if ((ProtectEmergencyVehicles == true) && (GetVehicle.Class == VehicleClass.Emergency))
                     {
                         // If ProtectEmergencyVehicles is true check if emergency vehicle and prompt are you sure?
-                         Game.DisplayNotification("You cannot delete emergency vehicles!");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete an emergency vehicle?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
                     }
 
                     // Else we can delete the vehicle
-
-                    // Check if there is a driver and delete them ( https://github.com/waynieoaks/RPH_Delete_Vehicle/issues/1 ) //
-                    Ped GetDriver = GetVehicle.Driver;
-                    if (GetDriver != null)
-                    {
-                        GetDriver.Delete();
-                    }
-
-                    // Now delete vehicle
-                    GetVehicle.Delete();
+                    DeleteVehicle();
 
                 } else
                 {
@@ -118,18 +152,62 @@ namespace RPH_Delete_Vehicle
                     Game.DisplayNotification("Could not find vehicle to delete! Try getting a little closer.");
                 }
 
-
-
-
-
             }
             catch (Exception e)
             {
-                ErrorLogger(e, "Activation", "Error during execution");
+                ErrorLogger(e, "Activation", "Error during vehicle check execution");
             }
         }
 
-        private static void LoadValuesFromIniFile()
+        public static async System.Threading.Tasks.Task AwaitConfirmation()
+        {
+            try
+            {
+                Command_Debug("AwaitConfirmation Task started");
+                int SecsToWait = 10; // Wait 10 seconds
+                int i = 0;
+                AwaitingInput = true;
+                while (AwaitingInput == true)
+                {
+                    if (i == SecsToWait*2) // Wait 10 seconds 
+                    {
+                        AwaitingInput = false;
+                    } else
+                    {
+                        await System.Threading.Tasks.Task.Delay(500);
+                        i++;
+                    }
+                }
+                Command_Debug("AwaitConfirmation Task completed"); 
+            }
+            catch (Exception e)
+            {
+                ErrorLogger(e, "AwaitConfirmation", "Error waiting for confirmation");
+            }
+        } 
+
+        private static void DeleteVehicle()
+        {
+
+            try
+            {
+                // Check if there is a driver and delete them ( https://github.com/waynieoaks/RPH_Delete_Vehicle/issues/1 ) //
+                Ped GetDriver = GetVehicle.Driver;
+                if ( (GetDriver != null) && (GetDriver != Game.LocalPlayer.Character) )
+                {
+                    GetDriver.Delete();
+                }
+
+                // Now delete vehicle
+                GetVehicle.Delete();
+            }
+            catch (Exception e)
+            {
+                ErrorLogger(e, "Activation", "Error during vehicle delete execution");
+            }
+        }
+
+            private static void LoadValuesFromIniFile()
         {
             InitializationFile ini = new InitializationFile(INIpath);
             ini.Create();
@@ -138,6 +216,9 @@ namespace RPH_Delete_Vehicle
             {
                 //Keyboard ini
 
+                DeclineKey = Keys.N;
+
+                //  Delete vehicle keys
                 if (ini.DoesKeyExist("Keyboard", "DeleteKey")) { DeleteKey = ini.ReadEnum<Keys>("Keyboard", "DeleteKey", Keys.L); }
                 else
                 {
@@ -150,6 +231,36 @@ namespace RPH_Delete_Vehicle
                 {
                     ini.Write("Keyboard", "DeleteModifierKey", "ShiftKey");
                     DeleteModifierKey = Keys.ShiftKey;
+                }
+
+                // Confirm keys
+                if (ini.DoesKeyExist("Keyboard", "ConfirmKey")) { ConfirmKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmKey", Keys.Y); }
+                else
+                {
+                    ini.Write("Keyboard", "ConfirmKey", "Y");
+                    ConfirmKey = Keys.Y;
+                }
+
+                if (ini.DoesKeyExist("Keyboard", "ConfirmModifierKey")) { ConfirmModifierKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmModifierKey", Keys.None); }
+                else
+                {
+                    ini.Write("Keyboard", "ConfirmModifierKey", "None");
+                    ConfirmModifierKey = Keys.None;
+                }
+
+                // Decline keys
+                if (ini.DoesKeyExist("Keyboard", "DeclineKey")) { DeclineKey = ini.ReadEnum<Keys>("Keyboard", "DeclineKey", Keys.N); }
+                else
+                {
+                    ini.Write("Keyboard", "DeclineKey", "N");
+                    DeclineKey = Keys.N;
+                }
+
+                if (ini.DoesKeyExist("Keyboard", "DeclineModifierKey")) { DeclineModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeclineModifierKey", Keys.None); }
+                else
+                {
+                    ini.Write("Keyboard", "DeclineModifierKey", "None");
+                    DeclineModifierKey = Keys.None;
                 }
 
                 // Controller ini
@@ -170,26 +281,30 @@ namespace RPH_Delete_Vehicle
 
                 // Other ini
 
-                if (ini.DoesKeyExist("Other", "ProtectCurrentVehicle")) { ProtectCurrentVehicle = ini.ReadBoolean("Other", "ProtectCurrentVehicle", true); }
-                else
-                {
-                    ini.Write("Other", "ProtectCurrentVehicle", "true");
-                    ProtectCurrentVehicle = true;
-                }
-                
-                if (ini.DoesKeyExist("Other", "ProtectlastVehicle")) { ProtectLastVehicle = ini.ReadBoolean("Other", "ProtectlastVehicle", true); }
-                else
-                {
-                    ini.Write("Other", "ProtectlastVehicle", "true");
-                    ProtectLastVehicle = true;
-                }
-                
-                if (ini.DoesKeyExist("Other", "ProtectEmergencyVehicles")) { ProtectEmergencyVehicles = ini.ReadBoolean("Other", "ProtectEmergencyVehicles", true); }
-                else
-                {
-                    ini.Write("Other", "ProtectEmergencyVehicles", "true");
-                    ProtectEmergencyVehicles = true;
-                }
+                ProtectCurrentVehicle = true;
+                ProtectLastVehicle = true;
+                ProtectEmergencyVehicles = true;
+
+                //if (ini.DoesKeyExist("Other", "ProtectCurrentVehicle")) { ProtectCurrentVehicle = ini.ReadBoolean("Other", "ProtectCurrentVehicle", true); }
+                //else
+                //{
+                //    ini.Write("Other", "ProtectCurrentVehicle", "true");
+                //    ProtectCurrentVehicle = true;
+                //}
+
+                //if (ini.DoesKeyExist("Other", "ProtectlastVehicle")) { ProtectLastVehicle = ini.ReadBoolean("Other", "ProtectlastVehicle", true); }
+                //else
+                //{
+                //    ini.Write("Other", "ProtectlastVehicle", "true");
+                //    ProtectLastVehicle = true;
+                //}
+
+                //if (ini.DoesKeyExist("Other", "ProtectEmergencyVehicles")) { ProtectEmergencyVehicles = ini.ReadBoolean("Other", "ProtectEmergencyVehicles", true); }
+                //else
+                //{
+                //    ini.Write("Other", "ProtectEmergencyVehicles", "true");
+                //    ProtectEmergencyVehicles = true;
+                //}
 
                 if (ini.DoesKeyExist("Other", "ShowDebug")) { ShowDebug = ini.ReadBoolean("Other", "ShowDebug", false); }
                 else
