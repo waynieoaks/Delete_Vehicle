@@ -1,4 +1,4 @@
-# RPH Delete Vehicle by Waynieoaks
+# Delete Vehicle by Waynieoaks
 https://github.com/waynieoaks/RPH_Delete_Vehicle
 
 Simple plugin to delete the closest vehicle in GTA V.
