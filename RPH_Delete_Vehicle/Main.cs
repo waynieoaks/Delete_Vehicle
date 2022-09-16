@@ -22,8 +22,10 @@ namespace RPH_Delete_Vehicle
         public static Keys DeleteModifierKey { get; set; }
         public static Keys ConfirmKey { get; set; }
         public static Keys ConfirmModifierKey { get; set; }
+        public static string ConfirmString { get; set; }
         public static Keys DeclineKey { get; set; }
         public static Keys DeclineModifierKey { get; set; }
+        public static string DeclineString { get; set; }
 
         // public static ControllerButtons DeleteButton { get; set; }
         // public static ControllerButtons DeleteModifierButton { get; set; }
@@ -119,7 +121,7 @@ namespace RPH_Delete_Vehicle
 
                     if ((ProtectCurrentVehicle == true) && (playerPed.IsInAnyVehicle(true)))
                     {
-                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you are sitting in?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you are sitting in?~n~    [<b>~r~" + ConfirmString + "~s~</b>]    [<b>~b~" + DeclineString + "~s~</b>]");
                         System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
@@ -128,7 +130,7 @@ namespace RPH_Delete_Vehicle
                     else if ((ProtectCurrentVehicle == true) && (GetVehicle == playerPed.LastVehicle))
                     {
                         //If vehcile is players last vehicle, prompt are you sure? 
-                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you were last sitting in?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you were last sitting in?~n~    [<b>~r~" + ConfirmString + "~s~</b>]    [<b>~b~" + DeclineString + "~s~</b>]");
                         System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
@@ -137,7 +139,7 @@ namespace RPH_Delete_Vehicle
                     else if ((ProtectEmergencyVehicles == true) && (GetVehicle.Class == VehicleClass.Emergency))
                     {
                         // If ProtectEmergencyVehicles is true check if emergency vehicle and prompt are you sure?
-                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete an emergency vehicle?~n~    [<b>~r~Y~s~</b>]    [<b>~b~N~s~</b>]");
+                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete an emergency vehicle?~n~    [<b>~r~"+ ConfirmString + "~s~</b>]    [<b>~b~"+ DeclineString + "~s~</b>]");
                         System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
@@ -216,8 +218,6 @@ namespace RPH_Delete_Vehicle
             {
                 //Keyboard ini
 
-                DeclineKey = Keys.N;
-
                 //  Delete vehicle keys
                 if (ini.DoesKeyExist("Keyboard", "DeleteKey")) { DeleteKey = ini.ReadEnum<Keys>("Keyboard", "DeleteKey", Keys.L); }
                 else
@@ -234,32 +234,66 @@ namespace RPH_Delete_Vehicle
                 }
 
                 // Confirm keys
-                if (ini.DoesKeyExist("Keyboard", "ConfirmKey")) { ConfirmKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmKey", Keys.Y); }
+                if (ini.DoesKeyExist("Keyboard", "ConfirmKey")) { 
+                    ConfirmKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmKey", Keys.Y);
+                    ConfirmString = ini.Read("Keyboard", "ConfirmKey", "Y");
+                }
                 else
                 {
                     ini.Write("Keyboard", "ConfirmKey", "Y");
                     ConfirmKey = Keys.Y;
+                    ConfirmString = "Y";
                 }
 
-                if (ini.DoesKeyExist("Keyboard", "ConfirmModifierKey")) { ConfirmModifierKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmModifierKey", Keys.None); }
+
+                if (ini.DoesKeyExist("Keyboard", "ConfirmModifierKey")) { 
+                    ConfirmModifierKey = ini.ReadEnum<Keys>("Keyboard", "ConfirmModifierKey", Keys.None);
+                    if (ConfirmModifierKey != Keys.None)
+                    {
+                        ConfirmString = ini.Read("Keyboard", "ConfirmModifierKey", "") + "+" + ConfirmString;
+                    }
+                }
                 else
                 {
                     ini.Write("Keyboard", "ConfirmModifierKey", "None");
                     ConfirmModifierKey = Keys.None;
+                    // Don't need to add modifier to ConfirmString as default is none
                 }
 
                 // Decline keys
-                if (ini.DoesKeyExist("Keyboard", "DeclineKey")) { DeclineKey = ini.ReadEnum<Keys>("Keyboard", "DeclineKey", Keys.N); }
+                if (ini.DoesKeyExist("Keyboard", "DeclineKey")) { 
+                    DeclineKey = ini.ReadEnum<Keys>("Keyboard", "DeclineKey", Keys.N);
+                    DeclineString = ini.Read("Keyboard", "DeclineKey", "N");
+                }
                 else
                 {
                     ini.Write("Keyboard", "DeclineKey", "N");
                     DeclineKey = Keys.N;
+                    DeclineString = "N";
                 }
 
-                if (ini.DoesKeyExist("Keyboard", "DeclineModifierKey")) { DeclineModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeclineModifierKey", Keys.None); }
+                if (ini.DoesKeyExist("Keyboard", "DeclineModifierKey")) { 
+                    DeclineModifierKey = ini.ReadEnum<Keys>("Keyboard", "DeclineModifierKey", Keys.None);
+                    DeclineString = ini.Read("Keyboard", "DeclineModifierKey", "") + "+" + DeclineString;
+                }
                 else
                 {
                     ini.Write("Keyboard", "DeclineModifierKey", "None");
+                    DeclineModifierKey = Keys.None;
+                    // Don't need to add modifier to DeclineString as default is none
+                }
+
+                // We should probably check if confirm and decline are the same keybindings here. 
+                if (ConfirmString == DeclineString)
+                {
+                    //Oops, that isn't going to work.
+                    Game.LogTrivial("Delete Vehicle: ERROR: Confirm key and decline key cannot be the same, switching to default. Please check your .ini");
+                    Game.DisplayNotification("<b>~y~Delete Vehicle: ~r~ERROR:</b>~s~~n~ Confirm key and decline key cannot be the same, switching to default.~n~~b~Please check your .ini~s~");
+                    ConfirmKey = Keys.Y;
+                    ConfirmModifierKey = Keys.None;
+                    ConfirmString = "Y";
+                    DeclineKey = Keys.N;
+                    DeclineString = "N";
                     DeclineModifierKey = Keys.None;
                 }
 
@@ -280,7 +314,7 @@ namespace RPH_Delete_Vehicle
                 // }
 
                 // Other ini
-
+                // Now true by default as there is an "Are you sure prompt"
                 ProtectCurrentVehicle = true;
                 ProtectLastVehicle = true;
                 ProtectEmergencyVehicles = true;

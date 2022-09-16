@@ -14,11 +14,24 @@ namespace SHV_Delete_Vehicle
     {
         public static string INIpath = "scripts\\SHV_Delete_Vehicle.ini";
         public static ScriptSettings IniSettings;
-        public static Keys ExampleKey { get; set; }
-        public static Keys ExampleModifierKey { get; set; }
-        public static ControllerKeybinds ExampleButton { get; set; }
-        public static ControllerKeybinds ExampleModifierButton { get; set; }
+        public static Keys DeleteKey { get; set; }
+        public static Keys DeleteModifierKey { get; set; }
+        public static Keys ConfirmKey { get; set; }
+        public static Keys ConfirmModifierKey { get; set; }
+        public static string ConfirmString { get; set; }
+        public static Keys DeclineKey { get; set; }
+        public static Keys DeclineModifierKey { get; set; }
+        public static string DeclineString { get; set; }
+
+        // public static ControllerButtons DeleteButton { get; set; }
+        // public static ControllerButtons DeleteModifierButton { get; set; }
+        public static Boolean ProtectCurrentVehicle { get; set; }
+        public static Boolean ProtectLastVehicle { get; set; }
+        public static Boolean ProtectEmergencyVehicles { get; set; }
         public static Boolean ShowDebug { get; set; }
+        public static Vehicle GetVehicle { get; set; }
+        public static Boolean AwaitingInput { get; set; }
+        public static UInt32 MsgID { get; set; }
 
         //Initialization of the plugin.
 
@@ -27,7 +40,7 @@ namespace SHV_Delete_Vehicle
             LoadValuesFromIniFile();
 
             KeyDown += OnKeyDown;
-            Tick += OnControllerDown;
+           // Tick += OnControllerDown;
 
             Interval = 0;
         }
@@ -35,39 +48,64 @@ namespace SHV_Delete_Vehicle
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
 
-            if (e.KeyCode == ExampleKey && e.Modifiers == ExampleModifierKey)
+            if (e.KeyCode == DeleteKey && e.Modifiers == DeleteModifierKey)
             {
                 Command_Debug("Debug: ExampleKey just pressed");
                 // Call the thing to do here
             }
         }
 
-        private void OnControllerDown(object sender, EventArgs e)
+        //private void OnControllerDown(object sender, EventArgs e)
+        //{
+        //    if (ExampleButton != ControllerKeybinds.None)
+        //    {
+        //        if (ExampleModifierButton != ControllerKeybinds.None)
+        //        {
+        //            if (Game.IsControlPressed((GTA.Control)ExampleModifierButton) && Game.IsControlJustReleased((GTA.Control)ExampleButton))
+        //            {
+        //                // Call the thing to do here
+        //            }
+        //        }
+        //        else if (ExampleModifierButton == ControllerKeybinds.None && Game.IsControlJustReleased((GTA.Control)ExampleButton))
+        //        {
+        //            // Call the thing to do here
+        //        }
+        //    }
+        //}
+
+        private static void ChkDeleteVehicle()
         {
-            if (ExampleButton != ControllerKeybinds.None)
-            {
-                if (ExampleModifierButton != ControllerKeybinds.None)
-                {
-                    if (Game.IsControlPressed((GTA.Control)ExampleModifierButton) && Game.IsControlJustReleased((GTA.Control)ExampleButton))
-                    {
-                        // Call the thing to do here
-                    }
-                }
-                else if (ExampleModifierButton == ControllerKeybinds.None && Game.IsControlJustReleased((GTA.Control)ExampleButton))
-                {
-                    // Call the thing to do here
-                }
-            }
+
         }
 
-        private void LoadValuesFromIniFile()
+        public static async System.Threading.Tasks.Task AwaitConfirmation()
         {
-            ScriptSettings scriptSettings = ScriptSettings.Load(INIpath);
-            ExampleKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "ExampleKey", Keys.R);
-            ExampleModifierKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "ExampleModifierKey", Keys.ControlKey);
 
-            ExampleButton = (ControllerKeybinds)scriptSettings.GetValue<ControllerKeybinds>("Controller", "ExampleButton", ControllerKeybinds.None);
-            ExampleModifierButton = (ControllerKeybinds)scriptSettings.GetValue<ControllerKeybinds>("Controller", "ExampleModifierButton", ControllerKeybinds.None);
+        }
+
+        private static void DeleteVehicle()
+        {
+
+        }
+
+            private void LoadValuesFromIniFile()
+            {
+            ScriptSettings scriptSettings = ScriptSettings.Load(INIpath);
+            DeleteKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "DeleteKey", Keys.L);
+            DeleteModifierKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "DeleteModifierKey", Keys.None);
+
+            //Confrim
+            ConfirmKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "ConfirmKey", Keys.Y);
+            ConfirmModifierKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "ConfirmModifierKey", Keys.None);
+            ConfirmString = "You forgot to set this, dummy!";
+
+            //Modify
+            DeclineKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "DeclineKey", Keys.N);
+            DeclineModifierKey = (Keys)scriptSettings.GetValue<Keys>("Keyboard", "DeclineModifierKey", Keys.None);
+            DeclineString = "You forgot to set this, dummy!";
+
+            //ExampleButton = (ControllerKeybinds)scriptSettings.GetValue<ControllerKeybinds>("Controller", "ExampleButton", ControllerKeybinds.None);
+            //ExampleModifierButton = (ControllerKeybinds)scriptSettings.GetValue<ControllerKeybinds>("Controller", "ExampleModifierButton", ControllerKeybinds.None);
 
             ShowDebug = (bool)scriptSettings.GetValue<bool>("Other", "ShowDebug", false);
             Command_Debug("Debug: ELS Cinematic INI loaded");
