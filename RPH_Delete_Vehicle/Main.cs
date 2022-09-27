@@ -29,9 +29,9 @@ namespace RPH_Delete_Vehicle
 
         // public static ControllerButtons DeleteButton { get; set; }
         // public static ControllerButtons DeleteModifierButton { get; set; }
-        public static Boolean ProtectCurrentVehicle { get; set; }
-        public static Boolean ProtectLastVehicle { get; set; }
-        public static Boolean ProtectEmergencyVehicles { get; set; }
+       // public static Boolean ProtectCurrentVehicle { get; set; }
+       // public static Boolean ProtectLastVehicle { get; set; }
+       // public static Boolean ProtectEmergencyVehicles { get; set; }
         public static Boolean ShowDebug { get; set; }
         public static Vehicle GetVehicle { get; set; }
         public static Boolean AwaitingInput { get; set; }
@@ -119,15 +119,16 @@ namespace RPH_Delete_Vehicle
                     // Vehicle GetVehicle = (Vehicle)GetEntity;
                     Command_Debug("Found a " + GetVehicle.Model.Name + ", Registration: " + GetVehicle.LicensePlate);
 
-                    if ((ProtectCurrentVehicle == true) && (playerPed.IsInAnyVehicle(true)))
+                    if (playerPed.IsInAnyVehicle(true))
                     {
-                        MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you are sitting in?~n~    [<b>~r~" + ConfirmString + "~s~</b>]    [<b>~b~" + DeclineString + "~s~</b>]");
-                        System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
+                        Game.DisplayNotification("Sorry, but you cannot delete the vehicle you are sitting in.");
+                        //  MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you are sitting in?~n~    [<b>~r~" + ConfirmString + "~s~</b>]    [<b>~b~" + DeclineString + "~s~</b>]");
+                        //   System.Threading.Tasks.Task AwaitInput = AwaitConfirmation();
 
                         return;
 
                     }
-                    else if ((ProtectCurrentVehicle == true) && (GetVehicle == playerPed.LastVehicle))
+                    else if (GetVehicle == playerPed.LastVehicle)
                     {
                         //If vehcile is players last vehicle, prompt are you sure? 
                         MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete the vehicle you were last sitting in?~n~    [<b>~r~" + ConfirmString + "~s~</b>]    [<b>~b~" + DeclineString + "~s~</b>]");
@@ -136,7 +137,7 @@ namespace RPH_Delete_Vehicle
                         return;
 
                     }
-                    else if ((ProtectEmergencyVehicles == true) && (GetVehicle.Class == VehicleClass.Emergency))
+                    else if (GetVehicle.Class == VehicleClass.Emergency)
                     {
                         // If ProtectEmergencyVehicles is true check if emergency vehicle and prompt are you sure?
                         MsgID = Game.DisplayNotification("<b>~y~Delete Vehicle:</b>~s~~n~ Are you sure you want to delete an emergency vehicle?~n~    [<b>~r~"+ ConfirmString + "~s~</b>]    [<b>~b~"+ DeclineString + "~s~</b>]");
@@ -314,10 +315,6 @@ namespace RPH_Delete_Vehicle
                 // }
 
                 // Other ini
-                // Now true by default as there is an "Are you sure prompt"
-                ProtectCurrentVehicle = true;
-                ProtectLastVehicle = true;
-                ProtectEmergencyVehicles = true;
 
                 //if (ini.DoesKeyExist("Other", "ProtectCurrentVehicle")) { ProtectCurrentVehicle = ini.ReadBoolean("Other", "ProtectCurrentVehicle", true); }
                 //else
